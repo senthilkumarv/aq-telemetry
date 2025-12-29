@@ -5,8 +5,9 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Instant;
 use telemetry_thrift::{
-    ChartSkeleton, ChartUpdate, CompletionEvent, DashboardSkeleton, SDPoint, SeriesSkeleton,
-    SeriesUpdate, StreamMessage, StreamMessageType, TileSkeleton, TileUpdate,
+    ChartSkeleton, ChartUpdate, CompletionEvent, DashboardSkeleton, OverlaySkeleton,
+    OverlayUpdate, SDPoint, SeriesSkeleton, SeriesUpdate, StreamMessage, StreamMessageType,
+    TileSkeleton, TileUpdate,
 };
 use thrift::OrderedFloat;
 use tokio::sync::mpsc;
@@ -135,7 +136,53 @@ impl StreamingDashboardService {
                             let series_update =
                                 SeriesUpdate::new(Some(series_id), Some(sd_points));
                             let chart_update =
-                                ChartUpdate::new(Some(chart_id), Some(vec![series_update]));
+                                ChartUpdate::new(Some(chart_id), Some(vec![series_update]), None);
+                            let msg = StreamMessage::new(
+                                Some(StreamMessageType::CHART_UPDATE),
+                                None,
+                                None,
+                                Some(chart_update),
+                                None,
+                            );
+                            let _ = tx.send(msg).await;
+                        }
+                    }
+                });
+            }
+
+            // 3b. Spawn tasks for chart overlays (similar to series but for boolean status indicators)
+            for overlay_config in &chart_config.overlays {
+                // Overlays from apex_output don't use probe metadata, so we don't filter them
+                // They will simply return empty if the output doesn't exist for this aquarium
+
+                let tx = tx.clone();
+                let repo = self.repository.clone();
+                let chart_id = chart_config.id.clone();
+                let overlay_id = overlay_config.id.clone();
+                let query = self.prepare_chart_query(&overlay_config.query, aquarium_id, hours);
+
+                tokio::spawn(async move {
+                    // Query with server-side downsampling
+                    if let Ok(points) = repo
+                        .query_time_series_downsampled(&query, MAX_POINTS_PER_SERIES)
+                        .await
+                    {
+                        // Only send if we have data
+                        if !points.is_empty() {
+                            let sd_points: Vec<SDPoint> = points
+                                .into_iter()
+                                .map(|p| {
+                                    SDPoint::new(Some(p.time_ms), Some(OrderedFloat::from(p.value)))
+                                })
+                                .collect();
+
+                            let overlay_update =
+                                OverlayUpdate::new(Some(overlay_id), Some(sd_points));
+                            let chart_update = ChartUpdate::new(
+                                Some(chart_id),
+                                Some(vec![]),
+                                Some(vec![overlay_update]),
+                            );
                             let msg = StreamMessage::new(
                                 Some(StreamMessageType::CHART_UPDATE),
                                 None,
@@ -212,14 +259,33 @@ impl StreamingDashboardService {
                     })
                     .collect();
 
-                // Only include chart if it has at least one series
-                if series.is_empty() {
+                // Build overlay skeletons (overlays don't need probe filtering)
+                let overlays: Vec<OverlaySkeleton> = c
+                    .overlays
+                    .iter()
+                    .map(|o| {
+                        OverlaySkeleton::new(
+                            Some(o.id.clone()),
+                            Some(o.name.clone()),
+                            o.color.clone(),
+                        )
+                    })
+                    .collect();
+
+                // Only include chart if it has at least one series or overlay
+                if series.is_empty() && overlays.is_empty() {
                     return None;
                 }
 
                 let kind = match c.kind.as_str() {
                     "line" => telemetry_thrift::ChartKind::LINE,
                     _ => telemetry_thrift::ChartKind::MULTILINE,
+                };
+
+                let overlays_opt = if overlays.is_empty() {
+                    None
+                } else {
+                    Some(overlays)
                 };
 
                 Some(ChartSkeleton::new(
@@ -231,6 +297,7 @@ impl StreamingDashboardService {
                     c.y_max.map(OrderedFloat::from),
                     c.fraction_digits,
                     Some(series),
+                    overlays_opt,
                 ))
             })
             .collect();
