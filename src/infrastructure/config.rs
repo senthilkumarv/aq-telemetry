@@ -40,6 +40,7 @@ pub struct ChartConfig {
     pub y_min: Option<f64>,
     pub y_max: Option<f64>,
     pub fraction_digits: Option<i32>,
+    #[serde(default)]
     pub series: Vec<SeriesConfig>,
     #[serde(default)]
     pub overlays: Vec<OverlayConfig>,
