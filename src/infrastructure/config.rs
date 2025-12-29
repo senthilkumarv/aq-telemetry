@@ -41,10 +41,20 @@ pub struct ChartConfig {
     pub y_max: Option<f64>,
     pub fraction_digits: Option<i32>,
     pub series: Vec<SeriesConfig>,
+    #[serde(default)]
+    pub overlays: Vec<OverlayConfig>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct SeriesConfig {
+    pub id: String,
+    pub name: String,
+    pub color: Option<String>,
+    pub query: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct OverlayConfig {
     pub id: String,
     pub name: String,
     pub color: Option<String>,
