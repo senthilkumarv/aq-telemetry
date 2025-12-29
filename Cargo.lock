@@ -2165,7 +2165,7 @@ dependencies = [
 [[package]]
 name = "telemetry-thrift"
 version = "0.1.0"
-source = "git+https://github.com/senthilkumarv/aq-telemetry-idl.git?tag=v0.0.2#c0d5e1f0d5e6320661fbecdfc2234bc1a1643c37"
+source = "git+https://github.com/senthilkumarv/aq-telemetry-idl.git?tag=v0.1.0#9660995d60230572c758165ac3678961379c2102"
 dependencies = [
  "thrift",
 ]
