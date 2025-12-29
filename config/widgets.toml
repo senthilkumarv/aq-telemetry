@@ -1,0 +1,427 @@
+# Widget Configuration
+# Auto-generated based on InfluxDB data analysis (2025-12-28)
+# Template variables: ${source} = aquarium ID, ${hours} = time range
+#
+# Data structure discovered:
+# - Great_Barrier_: temp (Tmp, Tmpx10, Tmpx13, Tmpx17), ph (pH, pHx10), cond (Salt, Condx13), orp (ORP, ORPx17), alk (Alkx6), ca (Cax6), mg (Mgx6), no3 (No3x5), po4 (Po4x5)
+# - Planet_72: temp (Tmp, Tmpx3), ph (pH, pHx3)
+# - Tidal_62_AIO_-: temp (Tmp, Tmpx6, Tmpx7), ph (pH, pHx6, pHx7), cond (Salt), orp (ORP)
+
+# Tiles - Single value metrics
+[[tiles]]
+id = "t-temp"
+title = "Temperature"
+unit = "°F"
+precision = 1
+query = "SELECT LAST(value) FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='temp' AND \"name\"='Tmp' AND time >= now() - 5m"
+
+[[tiles]]
+id = "t-ph"
+title = "pH"
+unit = ""
+precision = 2
+query = "SELECT LAST(value) FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='ph' AND \"name\"='pH' AND time >= now() - 5m"
+
+[[tiles]]
+id = "t-salinity"
+title = "Salinity"
+unit = "ppt"
+precision = 1
+query = "SELECT LAST(value) FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='cond' AND \"name\"='Salt' AND time >= now() - 5m"
+
+[[tiles]]
+id = "t-orp"
+title = "ORP"
+unit = "mV"
+precision = 0
+query = "SELECT LAST(value) FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='orp' AND \"name\"='ORP' AND time >= now() - 5m"
+
+[[tiles]]
+id = "t-alk"
+title = "Alkalinity"
+unit = "dKH"
+precision = 2
+query = "SELECT LAST(value) FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='alk' AND time >= now() - 5m"
+
+[[tiles]]
+id = "t-ca"
+title = "Calcium"
+unit = "ppm"
+precision = 0
+query = "SELECT LAST(value) FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='ca' AND time >= now() - 5m"
+
+[[tiles]]
+id = "t-mg"
+title = "Magnesium"
+unit = "ppm"
+precision = 0
+query = "SELECT LAST(value) FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='mg' AND time >= now() - 5m"
+
+[[tiles]]
+id = "t-no3"
+title = "Nitrate"
+unit = "ppm"
+precision = 1
+query = "SELECT LAST(value) FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='no3' AND time >= now() - 5m"
+
+[[tiles]]
+id = "t-po4"
+title = "Phosphate"
+unit = "ppm"
+precision = 2
+query = "SELECT LAST(value) FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='po4' AND time >= now() - 5m"
+
+# Pump tiles - Current pump metrics from apex_cor table
+[[tiles]]
+id = "t-return-pump-load"
+title = "Return Pump"
+unit = "%"
+precision = 0
+query = "SELECT LAST(load_pct) FROM \"apex_cor\" WHERE \"host\"='${source}' AND \"name\"='ReturnPump' AND time >= now() - 5m"
+
+[[tiles]]
+id = "t-return-pump-rpm"
+title = "Return RPM"
+unit = "rpm"
+precision = 0
+query = "SELECT LAST(rpm) FROM \"apex_cor\" WHERE \"host\"='${source}' AND \"name\"='ReturnPump' AND time >= now() - 5m"
+
+[[tiles]]
+id = "t-uv-pump-load"
+title = "UV Pump"
+unit = "%"
+precision = 0
+query = "SELECT LAST(load_pct) FROM \"apex_cor\" WHERE \"host\"='${source}' AND \"name\"='UV_PUMP' AND time >= now() - 5m"
+
+[[tiles]]
+id = "t-skimmer-pump-load"
+title = "Skimmer Pump"
+unit = "%"
+precision = 0
+query = "SELECT LAST(load_pct) FROM \"apex_cor\" WHERE \"host\"='${source}' AND \"name\"='SkimmerPump' AND time >= now() - 5m"
+
+# Charts - Time series with dynamic probe discovery
+# Temperature chart - queries all temp probes and creates multi-line chart with heater overlays
+[[charts]]
+id = "c-temp"
+title = "Temperature"
+unit = "°F"
+kind = "multiLine"
+# y_min and y_max removed to allow auto-scaling based on actual data per aquarium
+fraction_digits = 1
+
+  [[charts.series]]
+  id = "s-temp-tmp"
+  name = "Tmp"
+  color = "#007aff"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='temp' AND \"name\"='Tmp' AND value > 50 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.series]]
+  id = "s-temp-tmpx3"
+  name = "Tmpx3"
+  color = "#ff9500"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='temp' AND \"name\"='Tmpx3' AND value > 50 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.series]]
+  id = "s-temp-tmpx6"
+  name = "Tmpx6"
+  color = "#34c759"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='temp' AND \"name\"='Tmpx6' AND value > 50 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.series]]
+  id = "s-temp-tmpx7"
+  name = "Tmpx7"
+  color = "#af52de"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='temp' AND \"name\"='Tmpx7' AND value > 50 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.series]]
+  id = "s-temp-tmpx10"
+  name = "Tmpx10"
+  color = "#ff2d55"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='temp' AND \"name\"='Tmpx10' AND value > 50 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.series]]
+  id = "s-temp-tmpx13"
+  name = "Tmpx13"
+  color = "#5ac8fa"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='temp' AND \"name\"='Tmpx13' AND value > 50 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.series]]
+  id = "s-temp-tmpx17"
+  name = "Tmpx17"
+  color = "#ffcc00"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='temp' AND \"name\"='Tmpx17' AND value > 50 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  # Heater status overlays (boolean ON/OFF displayed on right axis)
+  [[charts.overlays]]
+  id = "o-temp-heater-ac"
+  name = "Heater - AC"
+  color = "#ff6b6b"
+  query = "SELECT CASE WHEN state_code = 0 OR state_code = 1 THEN 1 ELSE 0 END AS value FROM \"apex_output\" WHERE \"host\"='${source}' AND \"name\"='Heater_AC' AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.overlays]]
+  id = "o-temp-heater-batt"
+  name = "Heater - Battery"
+  color = "#ffa500"
+  query = "SELECT CASE WHEN state_code = 0 OR state_code = 1 THEN 1 ELSE 0 END AS value FROM \"apex_output\" WHERE \"host\"='${source}' AND \"name\"='Heater_Batt' AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+
+
+
+# pH chart - queries all pH probes
+[[charts]]
+id = "c-ph"
+title = "pH"
+unit = ""
+kind = "multiLine"
+# y_min and y_max removed to allow auto-scaling based on actual data per aquarium
+fraction_digits = 2
+
+  [[charts.series]]
+  id = "s-ph-ph"
+  name = "pH"
+  color = "#007aff"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='ph' AND \"name\"='pH' AND value > 7 AND value < 9 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.series]]
+  id = "s-ph-phx3"
+  name = "pHx3"
+  color = "#ff9500"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='ph' AND \"name\"='pHx3' AND value > 7 AND value < 9 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.series]]
+  id = "s-ph-phx6"
+  name = "pHx6"
+  color = "#34c759"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='ph' AND \"name\"='pHx6' AND value > 7 AND value < 9 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.series]]
+  id = "s-ph-phx7"
+  name = "pHx7"
+  color = "#af52de"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='ph' AND \"name\"='pHx7' AND value > 7 AND value < 9 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.series]]
+  id = "s-ph-phx10"
+  name = "pHx10"
+  color = "#ff2d55"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='ph' AND \"name\"='pHx10' AND value > 7 AND value < 9 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+# Salinity chart - queries all conductivity probes
+[[charts]]
+id = "c-salinity"
+title = "Salinity"
+unit = "ppt"
+kind = "multiLine"
+# y_min and y_max removed to allow auto-scaling based on actual data per aquarium
+fraction_digits = 1
+
+  [[charts.series]]
+  id = "s-salinity-salt"
+  name = "Salt"
+  color = "#007aff"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='cond' AND \"name\"='Salt' AND value > 20 AND value < 40 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.series]]
+  id = "s-salinity-condx13"
+  name = "Condx13"
+  color = "#34c759"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='cond' AND \"name\"='Condx13' AND value > 20 AND value < 40 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+# ORP chart - queries all ORP probes with ozone overlay
+[[charts]]
+id = "c-orp"
+title = "ORP"
+unit = "mV"
+kind = "multiLine"
+# y_min and y_max removed to allow auto-scaling based on actual data per aquarium
+fraction_digits = 0
+
+  [[charts.series]]
+  id = "s-orp-orp"
+  name = "ORP"
+  color = "#007aff"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='orp' AND \"name\"='ORP' AND value >= 100 AND value <= 500 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.series]]
+  id = "s-orp-orpx17"
+  name = "ORPx17"
+  color = "#ff9500"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='orp' AND \"name\"='ORPx17' AND value >= 100 AND value <= 500 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  # Ozone status overlay (boolean ON/OFF displayed on right axis)
+  [[charts.overlays]]
+  id = "o-orp-ozone"
+  name = "Ozone"
+  color = "#00d4ff"
+  query = "SELECT CASE WHEN state_code = 0 OR state_code = 1 THEN 1 ELSE 0 END AS value FROM \"apex_output\" WHERE \"host\"='${source}' AND \"name\"='Ozone' AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+# Alkalinity chart (single line for Great_Barrier_)
+[[charts]]
+id = "c-alk"
+title = "Alkalinity"
+unit = "dKH"
+kind = "line"
+# y_min and y_max removed to allow auto-scaling based on actual data per aquarium
+fraction_digits = 2
+
+  [[charts.series]]
+  id = "s-alk-alkx6"
+  name = "Alkx6"
+  color = "#007aff"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='alk' AND \"name\"='Alkx6' AND value > 5 AND value < 15 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+# Calcium chart (single line for Great_Barrier_)
+[[charts]]
+id = "c-ca"
+title = "Calcium"
+unit = "ppm"
+kind = "line"
+# y_min and y_max removed to allow auto-scaling based on actual data per aquarium
+fraction_digits = 0
+
+  [[charts.series]]
+  id = "s-ca-cax6"
+  name = "Cax6"
+  color = "#007aff"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='ca' AND \"name\"='Cax6' AND value > 300 AND value < 600 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+# Magnesium chart (single line for Great_Barrier_)
+[[charts]]
+id = "c-mg"
+title = "Magnesium"
+unit = "ppm"
+kind = "line"
+# y_min and y_max removed to allow auto-scaling based on actual data per aquarium
+fraction_digits = 0
+
+  [[charts.series]]
+  id = "s-mg-mgx6"
+  name = "Mgx6"
+  color = "#007aff"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='mg' AND \"name\"='Mgx6' AND value > 1000 AND value < 2000 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+# Nitrate chart (single line for Great_Barrier_)
+[[charts]]
+id = "c-no3"
+title = "Nitrate"
+unit = "ppm"
+kind = "line"
+# y_min and y_max removed to allow auto-scaling based on actual data per aquarium
+fraction_digits = 1
+
+  [[charts.series]]
+  id = "s-no3-no3x5"
+  name = "No3x5"
+  color = "#007aff"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='no3' AND \"name\"='No3x5' AND value >= 0 AND value < 100 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+# Phosphate chart (single line for Great_Barrier_)
+[[charts]]
+id = "c-po4"
+title = "Phosphate"
+unit = "ppm"
+kind = "line"
+# y_min and y_max removed to allow auto-scaling based on actual data per aquarium
+fraction_digits = 2
+
+  [[charts.series]]
+  id = "s-po4-po4x5"
+  name = "Po4x5"
+  color = "#007aff"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"probe_type\"='po4' AND \"name\"='Po4x5' AND value >= 0 AND value < 2 AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+# Automatic Water Change chart - shows drain/reservoir levels with status overlays
+[[charts]]
+id = "c-awc"
+title = "Automatic Water Change"
+unit = "inches"
+kind = "multiLine"
+fraction_digits = 2
+
+  [[charts.series]]
+  id = "s-awc-drain"
+  name = "Drain"
+  color = "#007aff"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"name\"='AWC-DR' AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.series]]
+  id = "s-awc-reservoir"
+  name = "Reservoir"
+  color = "#34c759"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"name\"='AWC-RE' AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  # Water change status overlays (boolean ON/OFF displayed on right axis)
+  [[charts.overlays]]
+  id = "o-awc-res-empty"
+  name = "Reservoir Empty"
+  color = "#ff6b6b"
+  query = "SELECT CASE WHEN state_code = 0 OR state_code = 1 THEN 1 ELSE 0 END AS value FROM \"apex_output\" WHERE \"host\"='${source}' AND \"name\"='WC_Res_Empty' AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.overlays]]
+  id = "o-awc-drain-full"
+  name = "Drain Full"
+  color = "#ffa500"
+  query = "SELECT CASE WHEN state_code = 0 OR state_code = 1 THEN 1 ELSE 0 END AS value FROM \"apex_output\" WHERE \"host\"='${source}' AND \"name\"='WC_Drain_Ful' AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+# ATK Sensors chart - shows ATK sensor and ATO status
+[[charts]]
+id = "c-atk"
+title = "ATK Sensors"
+unit = ""
+kind = "multiLine"
+fraction_digits = 0
+
+  # ATK/ATO status overlays (boolean ON/OFF)
+  [[charts.overlays]]
+  id = "o-atk-sensor1"
+  name = "ATK Sensor 1"
+  color = "#007aff"
+  query = "SELECT CASE WHEN state_code = 0 OR state_code = 1 THEN 1 ELSE 0 END AS value FROM \"apex_output\" WHERE \"host\"='${source}' AND \"name\"='ATK_Sensor_1' AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.overlays]]
+  id = "o-atk-sensor2"
+  name = "ATK Sensor 2"
+  color = "#34c759"
+  query = "SELECT CASE WHEN state_code = 0 OR state_code = 1 THEN 1 ELSE 0 END AS value FROM \"apex_output\" WHERE \"host\"='${source}' AND \"name\"='ATK_Sensor_2' AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  [[charts.overlays]]
+  id = "o-atk-ato"
+  name = "ATO"
+  color = "#ff9500"
+  query = "SELECT CASE WHEN state_code = 0 OR state_code = 1 THEN 1 ELSE 0 END AS value FROM \"apex_output\" WHERE \"host\"='${source}' AND \"name\"='ATO' AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+# ATO Reservoir chart - shows ATO reservoir level with low water warning
+[[charts]]
+id = "c-ato-reservoir"
+title = "ATO Reservoir"
+unit = "inches"
+kind = "line"
+fraction_digits = 2
+
+  [[charts.series]]
+  id = "s-ato-level"
+  name = "ATO Level"
+  color = "#007aff"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"name\"='ATOLvl' AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+  # ATO low water warning overlay
+  [[charts.overlays]]
+  id = "o-ato-low-water"
+  name = "Low Water"
+  color = "#ff6b6b"
+  query = "SELECT CASE WHEN state_code = 0 OR state_code = 1 THEN 1 ELSE 0 END AS value FROM \"apex_output\" WHERE \"host\"='${source}' AND \"name\"='ATO_Low_Wat' AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
+
+# Return Chamber chart - shows sump water level
+[[charts]]
+id = "c-return-chamber"
+title = "Return Chamber"
+unit = "inches"
+kind = "line"
+fraction_digits = 2
+
+  [[charts.series]]
+  id = "s-sump-level"
+  name = "Sump"
+  color = "#007aff"
+  query = "SELECT LAST(value) AS value FROM \"apex_probe\" WHERE \"host\"='${source}' AND \"name\"='Sump' AND time >= now() - ${hours}h GROUP BY time(1m) fill(none)"
